@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, ArrowLeft } from "lucide-react";
 import Footer from "@/components/Footer";
@@ -8,7 +8,27 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ username: false, password: false });
+  const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
+
+  const slides = [
+    {
+      image: "/assets/images/login-illustration.png",
+      text: "Empowering Intelligence Through Innovation"
+    },
+    {
+      image: "/assets/images/login-illustration2.png",
+      text: "Advancing Knowledge Through Technology"
+    }
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 3000); // Change slide every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,18 +67,30 @@ export default function Login() {
         <div className="w-full max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
           {/* Left Side - Illustration */}
           <div className="hidden md:flex flex-col items-center justify-center">
-            <img
-              src="/assets/images/login-illustration.png"
-              alt="Login Illustration"
-              className="w-full max-w-md"
-            />
-            <p className="text-aira-gray-dark text-xl md:text-2xl font-medium text-center mt-8">
-              Empowering Intelligence Through Innovation
+            <div className="relative w-full max-w-md aspect-square">
+              {slides.map((slide, index) => (
+                <img
+                  key={index}
+                  src={slide.image}
+                  alt={`Login Illustration ${index + 1}`}
+                  className={`absolute top-0 left-0 w-full h-full object-contain transition-opacity duration-1000 ${
+                    index === currentSlide ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="text-aira-gray-dark text-xl md:text-2xl font-medium text-center mt-8 transition-opacity duration-500">
+              {slides[currentSlide].text}
             </p>
             <div className="flex justify-center gap-3 mt-4">
-              <div className="w-3 h-2 rounded-full bg-aira-gray-dark" />
-              <div className="w-3 h-2 rounded-full bg-aira-gray-light" />
-              <div className="w-3 h-2 rounded-full bg-aira-gray-light" />
+              {slides.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-3 h-2 rounded-full transition-colors duration-300 ${
+                    index === currentSlide ? "bg-aira-gray-dark" : "bg-aira-gray-light"
+                  }`}
+                />
+              ))}
             </div>
           </div>
 
@@ -129,16 +161,6 @@ export default function Login() {
               >
                 Login
               </button>
-
-              {/* Forgot Password Link */}
-              <div className="text-center">
-                <a
-                  href="#"
-                  className="text-aira-link text-xl underline hover:text-aira-secondary"
-                >
-                  Forget Password?
-                </a>
-              </div>
             </form>
           </div>
         </div>

@@ -6,8 +6,20 @@ import Footer from "@/components/Footer";
 export default function OtpVerification() {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(300); // 5 minutes in seconds
+  const [currentSlide, setCurrentSlide] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const navigate = useNavigate();
+
+  const slides = [
+    {
+      image: "/assets/images/login-illustration.png",
+      text: "Empowering Intelligence Through Innovation"
+    },
+    {
+      image: "/assets/images/login-illustration2.png",
+      text: "Advancing Knowledge Through Technology"
+    }
+  ];
 
   useEffect(() => {
     // Focus first input on mount
@@ -23,6 +35,15 @@ export default function OtpVerification() {
       return () => clearInterval(interval);
     }
   }, [timer]);
+
+  useEffect(() => {
+    // Image slider
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 3000); // Change slide every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -116,18 +137,30 @@ export default function OtpVerification() {
         <div className="w-full max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
           {/* Left Side - Illustration */}
           <div className="hidden md:flex flex-col items-center justify-center">
-            <img
-              src="/assets/images/login-illustration.png"
-              alt="OTP Verification Illustration"
-              className="w-full max-w-md"
-            />
-            <p className="text-aira-gray-dark text-xl md:text-2xl font-medium text-center mt-8">
-              Empowering Intelligence Through Innovation
+            <div className="relative w-full max-w-md aspect-square">
+              {slides.map((slide, index) => (
+                <img
+                  key={index}
+                  src={slide.image}
+                  alt={`OTP Verification Illustration ${index + 1}`}
+                  className={`absolute top-0 left-0 w-full h-full object-contain transition-opacity duration-1000 ${
+                    index === currentSlide ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="text-aira-gray-dark text-xl md:text-2xl font-medium text-center mt-8 transition-opacity duration-500">
+              {slides[currentSlide].text}
             </p>
             <div className="flex justify-center gap-3 mt-4">
-              <div className="w-3 h-2 rounded-full bg-aira-gray-light" />
-              <div className="w-3 h-2 rounded-full bg-aira-gray-dark" />
-              <div className="w-3 h-2 rounded-full bg-aira-gray-light" />
+              {slides.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-3 h-2 rounded-full transition-colors duration-300 ${
+                    index === currentSlide ? "bg-aira-gray-dark" : "bg-aira-gray-light"
+                  }`}
+                />
+              ))}
             </div>
           </div>
 
