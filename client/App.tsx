@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import OtpVerification from "./pages/OtpVerification";
 import Dashboard from "./pages/Dashboard";
+import SimulasiIPK from "./pages/SimulasiIPK";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/otp-verification" element={<OtpVerification />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/simulasi-ipk" element={<SimulasiIPK />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

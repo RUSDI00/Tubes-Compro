@@ -18,6 +18,11 @@ export default function Dashboard() {
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header with Sidebar Toggle */}
       <header className="sticky top-0 z-50 bg-gradient-to-r from-aira-primary to-aira-secondary py-6 px-4 md:px-8 relative overflow-hidden shadow-lg">
+        {/* Decorative gradient circles */}
+        <div className="absolute right-0 top-1/3 w-[600px] h-[600px] rounded-full opacity-[0.08] bg-gradient-to-br from-white via-white/50 to-transparent pointer-events-none" />
+        <div className="absolute -left-32 -top-32 w-[500px] h-[500px] opacity-[0.1] pointer-events-none">
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-white to-transparent" />
+        </div>
         <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent pointer-events-none" />
         <div className="relative max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -56,7 +61,13 @@ export default function Dashboard() {
             <button className="w-full text-left py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-colors font-medium">
               Profile
             </button>
-            <button className="w-full text-left py-3 px-4 rounded-lg hover:bg-white/20 transition-colors font-medium">
+            <button
+              onClick={() => {
+                navigate("/simulasi-ipk");
+                setIsSidebarOpen(false);
+              }}
+              className="w-full text-left py-3 px-4 rounded-lg hover:bg-white/20 transition-colors font-medium"
+            >
               Simulasi IPK
             </button>
             <button className="w-full text-left py-3 px-4 rounded-lg hover:bg-white/20 transition-colors font-medium">
