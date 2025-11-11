@@ -264,6 +264,11 @@ export default function SimulasiIPK() {
                   <Menu className="w-6 h-6" />
                 )}
               </button>
+              <img
+                src="/assets/images/logo-aira-footer.png"
+                alt="AIRA Logo"
+                className="w-12 h-12 md:w-16 md:h-16 object-contain"
+              />
             </div>
             <h1 className="text-white text-2xl md:text-4xl lg:text-5xl font-bold">
               Simulasi IPK
@@ -319,9 +324,9 @@ export default function SimulasiIPK() {
 
           {/* Main Content */}
           <main className="flex-1 px-4 md:px-8 py-8 bg-white">
-            <div className="max-w-7xl mx-auto space-y-6">
+            <div className="max-w-5xl mx-auto space-y-6">
               {/* Breadcrumbs with Download PDF Button */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Link
                     to="/dashboard"
@@ -464,7 +469,7 @@ export default function SimulasiIPK() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <button
                   onClick={() => setIsSubmitted(false)}
                   className="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg transition-colors flex items-center gap-2"
@@ -472,17 +477,19 @@ export default function SimulasiIPK() {
                   <ArrowLeft className="w-5 h-5" />
                   Back
                 </button>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="flex items-center gap-0 text-sm text-gray-500">
                   <span>made by</span>
                   <img
-                    src="/assets/images/logo-aira-footer.png"
+                    src="/assets/images/logo-aira.png"
                     alt="AIRA"
-                    className="w-6 h-6"
+                    className="w-12 h-12 -ml-1"
                   />
                 </div>
                 <button
                   onClick={() => {
-                    navigate("/");
+                    setIsSubmitted(false);
+                    setIsGenerated(false);
+                    navigate("/simulasi-ipk");
                   }}
                   className="px-6 py-2 bg-aira-primary hover:bg-aira-secondary text-white font-medium rounded-lg transition-colors flex items-center gap-2"
                 >
@@ -583,7 +590,7 @@ export default function SimulasiIPK() {
 
         {/* Main Content */}
         <main className="flex-1 px-4 md:px-8 py-8 bg-white">
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className="max-w-5xl mx-auto space-y-6">
             {/* Breadcrumbs */}
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <Link
@@ -605,7 +612,7 @@ export default function SimulasiIPK() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Semester*
                   </label>
-                  <div className="relative">
+                  <div className="relative group">
                     <select
                       value={selectedSemester}
                       onChange={(e) => setSelectedSemester(e.target.value)}
@@ -620,7 +627,7 @@ export default function SimulasiIPK() {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none transition-transform duration-200 group-focus-within:rotate-180" />
                   </div>
                 </div>
 
@@ -629,7 +636,7 @@ export default function SimulasiIPK() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Study Plan*
                   </label>
-                  <div className="relative">
+                  <div className="relative group">
                     <select
                       value={selectedStudyPlan}
                       onChange={(e) => setSelectedStudyPlan(e.target.value)}
@@ -644,7 +651,7 @@ export default function SimulasiIPK() {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none transition-transform duration-200 group-focus-within:rotate-180" />
                   </div>
                 </div>
 
@@ -720,7 +727,7 @@ export default function SimulasiIPK() {
                             {course.tingkat}
                           </td>
                           <td className="px-4 py-3">
-                            <div className="relative inline-block">
+                            <div className="relative inline-block group">
                               <select
                                 value={course.prediksi}
                                 onChange={(e) =>
@@ -734,7 +741,7 @@ export default function SimulasiIPK() {
                                   </option>
                                 ))}
                               </select>
-                              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none transition-transform duration-200 group-focus-within:rotate-180" />
                             </div>
                           </td>
                           <td className="px-4 py-3">
@@ -804,7 +811,7 @@ export default function SimulasiIPK() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Tingkat
                   </label>
-                  <div className="relative">
+                  <div className="relative group">
                     <select
                       value={filterTingkat}
                       onChange={(e) => setFilterTingkat(e.target.value)}
@@ -817,14 +824,14 @@ export default function SimulasiIPK() {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none transition-transform duration-200 group-focus-within:rotate-180" />
                   </div>
                 </div>
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Cari Mata Kuliah
                   </label>
-                  <div className="relative">
+                  <div className="relative group">
                     <input
                       type="text"
                       value={searchQuery}
@@ -940,7 +947,7 @@ export default function SimulasiIPK() {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none transition-transform duration-200 group-focus-within:rotate-180" />
                   </div>
                 </div>
                 <div className="flex-1">
