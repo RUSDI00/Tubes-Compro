@@ -70,7 +70,13 @@ export default function Dashboard() {
             >
               Simulasi IPK
             </button>
-            <button className="w-full text-left py-3 px-4 rounded-lg hover:bg-white/20 transition-colors font-medium">
+            <button
+              onClick={() => {
+                navigate("/integrasi-minat");
+                setIsSidebarOpen(false);
+              }}
+              className="w-full text-left py-3 px-4 rounded-lg hover:bg-white/20 transition-colors font-medium"
+            >
               Integrasi Minat
             </button>
             <div className="flex-1"></div>

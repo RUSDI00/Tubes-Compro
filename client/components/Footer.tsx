@@ -1,4 +1,5 @@
 import { Mail, Phone, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
@@ -52,9 +53,30 @@ export default function Footer() {
                 Explore
               </h3>
               <ul className="space-y-3 text-aira-text-light text-base">
-                <li>Profile</li>
-                <li>Simulasi IPK</li>
-                <li>Integrasi Minat</li>
+                <li>
+                  <Link 
+                    to="/dashboard" 
+                    className="hover:text-white transition-colors duration-200 cursor-pointer"
+                  >
+                    Profile
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    to="/simulasi-ipk" 
+                    className="hover:text-white transition-colors duration-200 cursor-pointer"
+                  >
+                    Simulasi IPK
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    to="/integrasi-minat" 
+                    className="hover:text-white transition-colors duration-200 cursor-pointer"
+                  >
+                    Integrasi Minat
+                  </Link>
+                </li>
               </ul>
             </div>
 
