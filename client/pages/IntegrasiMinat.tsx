@@ -99,7 +99,7 @@ export default function IntegrasiMinat() {
 
   const addHardskill = (skill: Skill) => {
     if (selectedHardskills.length >= 5) {
-      setError("Maksimal 5 skill per kategori.");
+      setError("*Maximum 5 skills allowed. Choose wisely, every skill defines your profile.");
       return;
     }
     
@@ -111,7 +111,7 @@ export default function IntegrasiMinat() {
 
   const addSoftskill = (skill: Skill) => {
     if (selectedSoftskills.length >= 5) {
-      setError("Maksimal 5 skill per kategori.");
+      setError("*Maximum 5 skills allowed. Choose wisely, every skill defines your profile.");
       return;
     }
     
@@ -458,12 +458,11 @@ export default function IntegrasiMinat() {
             <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-8">
               <div className="mb-6">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-                  AIRA is ready to analyze your <span className="font-bold">technical potential.</span>
+                  AIRA is ready to analyze your <span className="font-bold text-red-800">technical potential.</span>
                 </h2>
                 <p className="text-gray-600 mb-2">
                   Select the Hard Skills that best represent you, so our system can calibrate your unique intelligence profile.
                 </p>
-                <p className="text-red-500 text-sm mb-4">*Maximum 5 skills allowed. Choose wisely, every skill defines your profile.</p>
               </div>
               
               <div className="flex items-center justify-start mb-4">
@@ -497,7 +496,7 @@ export default function IntegrasiMinat() {
                           <span className="text-gray-800">{skill.name}</span>
                           <button
                             onClick={() => addHardskill(skill)}
-                            disabled={selectedHardskills.find(s => s.id === skill.id) !== undefined || selectedHardskills.length >= 5}
+                            disabled={selectedHardskills.find(s => s.id === skill.id) !== undefined}
                             className="p-1 bg-blue-200 rounded-full hover:bg-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Plus className="w-4 h-4 text-blue-700" />
@@ -530,12 +529,11 @@ export default function IntegrasiMinat() {
             <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-8">
               <div className="mb-6">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-                  Now, let AIRA understand your <span className="font-bold">human side.</span>
+                  Now, let AIRA understand your <span className="font-bold text-red-800">human side.</span>
                 </h2>
                 <p className="text-gray-600 mb-2">
                   Select the Soft Skills that best represent you, so our system can calibrate your unique intelligence profile.
                 </p>
-                <p className="text-red-500 text-sm mb-4">*Maximum 5 skills allowed. Choose wisely, every skill defines your profile.</p>
               </div>
               
               <div className="flex items-center justify-start mb-4">
@@ -569,7 +567,7 @@ export default function IntegrasiMinat() {
                           <span className="text-gray-800">{skill.name}</span>
                           <button
                             onClick={() => addSoftskill(skill)}
-                            disabled={selectedSoftskills.find(s => s.id === skill.id) !== undefined || selectedSoftskills.length >= 5}
+                            disabled={selectedSoftskills.find(s => s.id === skill.id) !== undefined}
                             className="p-1 bg-blue-200 rounded-full hover:bg-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Plus className="w-4 h-4 text-blue-700" />
