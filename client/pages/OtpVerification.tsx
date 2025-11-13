@@ -134,10 +134,10 @@ export default function OtpVerification() {
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+        <div className="w-full max-w-6xl mx-auto flex flex-col md:grid md:grid-cols-2 gap-8 items-center">
           {/* Left Side - Illustration */}
-          <div className="hidden md:flex flex-col items-center justify-center">
-            <div className="relative w-full max-w-md aspect-square">
+          <div className="flex flex-col items-center justify-center order-1 md:order-none">
+            <div className="relative w-full max-w-xs md:max-w-md aspect-square">
               {slides.map((slide, index) => (
                 <img
                   key={index}
@@ -149,7 +149,7 @@ export default function OtpVerification() {
                 />
               ))}
             </div>
-            <p className="text-aira-gray-dark text-xl md:text-2xl font-medium text-center mt-8 transition-opacity duration-500">
+            <p className="text-aira-gray-dark text-lg md:text-2xl font-medium text-center mt-4 md:mt-8 transition-opacity duration-500">
               {slides[currentSlide].text}
             </p>
             <div className="flex justify-center gap-3 mt-4">
@@ -165,7 +165,7 @@ export default function OtpVerification() {
           </div>
 
           {/* Right Side - OTP Form */}
-          <div className="flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center justify-center order-2 md:order-none">
             <div className="w-full max-w-md">
               <h1 className="text-3xl md:text-4xl font-bold text-aira-gray-dark mb-4 text-center">
                 OTP Verification

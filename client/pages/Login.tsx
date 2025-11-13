@@ -64,10 +64,10 @@ export default function Login() {
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+        <div className="w-full max-w-6xl mx-auto flex flex-col md:grid md:grid-cols-2 gap-8 items-center">
           {/* Left Side - Illustration */}
-          <div className="hidden md:flex flex-col items-center justify-center">
-            <div className="relative w-full max-w-md aspect-square">
+          <div className="flex flex-col items-center justify-center order-1 md:order-none">
+            <div className="relative w-full max-w-xs md:max-w-md aspect-square">
               {slides.map((slide, index) => (
                 <img
                   key={index}
@@ -79,7 +79,7 @@ export default function Login() {
                 />
               ))}
             </div>
-            <p className="text-aira-gray-dark text-xl md:text-2xl font-medium text-center mt-8 transition-opacity duration-500">
+            <p className="text-aira-gray-dark text-lg md:text-2xl font-medium text-center mt-4 md:mt-8 transition-opacity duration-500">
               {slides[currentSlide].text}
             </p>
             <div className="flex justify-center gap-3 mt-4">
@@ -95,7 +95,7 @@ export default function Login() {
           </div>
 
           {/* Right Side - Login Form */}
-          <div className="w-full max-w-lg mx-auto md:mx-0">
+          <div className="w-full max-w-lg mx-auto md:mx-0 order-2 md:order-none">
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Header */}
               <div>
