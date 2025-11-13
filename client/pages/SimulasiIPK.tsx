@@ -1,20 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Menu, X, ChevronDown, Home, ChevronRight, Plus, Search, Trash2, Download, ArrowLeft, LogOut } from "lucide-react";
+import { Menu, X, ChevronDown, Home, ChevronRight, Plus, Search, Trash2, Download, ArrowLeft, Pencil } from "lucide-react";
 import Footer from "@/components/Footer";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Default courses for semester 3
+const defaultCoursesSemester3 = [
+  { id: 1, mataKuliah: "Organisasi dan arsitektur komputer", sks: 3, tingkat: "II", prediksi: "" },
+  { id: 2, mataKuliah: "Struktur data", sks: 3, tingkat: "II", prediksi: "" },
+  { id: 3, mataKuliah: "Analisis Kompleksitas Algoritma", sks: 3, tingkat: "II", prediksi: "" },
+  { id: 4, mataKuliah: "Sistem Basis Data", sks: 3, tingkat: "II", prediksi: "" },
+  { id: 5, mataKuliah: "Teori Peluang", sks: 3, tingkat: "II", prediksi: "" },
+  { id: 6, mataKuliah: "Wawasan Global TIK", sks: 2, tingkat: "II", prediksi: "" },
+  { id: 7, mataKuliah: "RPL : Analisis dan Perancangan Aplikasi", sks: 3, tingkat: "III", prediksi: "" },
+];
+
 export default function SimulasiIPK() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [selectedSemester, setSelectedSemester] = useState("");
+  const [selectedSemester, setSelectedSemester] = useState("3");
   const [selectedStudyPlan, setSelectedStudyPlan] = useState("");
   const [courses, setCourses] = useState<
     Array<{
@@ -24,7 +34,7 @@ export default function SimulasiIPK() {
       tingkat: string;
       prediksi: string;
     }>
-  >([]);
+  >([...defaultCoursesSemester3]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] = useState(false);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
@@ -36,19 +46,27 @@ export default function SimulasiIPK() {
   const [isGenerated, setIsGenerated] = useState(false);
   const [isLoadingDialogOpen, setIsLoadingDialogOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isExitConfirmationOpen, setIsExitConfirmationOpen] = useState(false);
+  const [isEndSessionDialogOpen, setIsEndSessionDialogOpen] = useState(false);
+  const [isSKSWarningOpen, setIsSKSWarningOpen] = useState(false);
 
   // Mock data untuk daftar mata kuliah yang tersedia
   const availableCourses = [
-    { id: 1, nama: "Matematika Diskrit", tingkat: "II", sks: 3 },
-    { id: 2, nama: "Matematika Diskrit", tingkat: "I", sks: 4 },
-    { id: 3, nama: "Algoritma dan Struktur Data", tingkat: "II", sks: 4 },
-    { id: 4, nama: "Basis Data", tingkat: "II", sks: 3 },
-    { id: 5, nama: "Pemrograman Web", tingkat: "III", sks: 3 },
-    { id: 6, nama: "Sistem Operasi", tingkat: "III", sks: 3 },
-    { id: 7, nama: "Jaringan Komputer", tingkat: "III", sks: 3 },
-    { id: 8, nama: "Kalkulus", tingkat: "I", sks: 4 },
-    { id: 9, nama: "Fisika Dasar", tingkat: "I", sks: 3 },
-    { id: 10, nama: "Pemrograman Berorientasi Objek", tingkat: "II", sks: 4 },
+    { id: 1, nama: "Organisasi dan arsitektur komputer", tingkat: "II", sks: 3 },
+    { id: 2, nama: "Struktur data", tingkat: "II", sks: 3 },
+    { id: 3, nama: "Analisis Kompleksitas Algoritma", tingkat: "II", sks: 3 },
+    { id: 4, nama: "Sistem Basis Data", tingkat: "II", sks: 3 },
+    { id: 5, nama: "Teori Peluang", tingkat: "II", sks: 3 },
+    { id: 6, nama: "Wawasan Global TIK", tingkat: "II", sks: 2 },
+    { id: 7, nama: "RPL : Analisis dan Perancangan Aplikasi", tingkat: "III", sks: 3 },
+    { id: 8, nama: "Matematika Diskrit", tingkat: "I", sks: 4 },
+    { id: 9, nama: "Algoritma dan Struktur Data", tingkat: "II", sks: 4 },
+    { id: 10, nama: "Pemrograman Web", tingkat: "III", sks: 3 },
+    { id: 11, nama: "Sistem Operasi", tingkat: "III", sks: 3 },
+    { id: 12, nama: "Jaringan Komputer", tingkat: "III", sks: 3 },
+    { id: 13, nama: "Kalkulus", tingkat: "I", sks: 4 },
+    { id: 14, nama: "Fisika Dasar", tingkat: "I", sks: 3 },
+    { id: 15, nama: "Pemrograman Berorientasi Objek", tingkat: "II", sks: 4 },
   ];
 
   // Filter courses berdasarkan search dan tingkat
@@ -64,46 +82,26 @@ export default function SimulasiIPK() {
 
   const studyPlanOptions = ["Reguler", "Fast Track", "MBKM"];
 
-  const prediksiOptions = ["A", "AB", "B", "C", "D", "E"];
+  const prediksiOptions = ["A", "AB", "B", "BC", "C", "D", "E"];
 
   const tingkatOptions = ["I", "II", "III", "IV"];
 
   const handleGenerate = () => {
-    // Mock data for demonstration
-    if (selectedSemester && selectedStudyPlan) {
-      setCourses([
-        {
-          id: 1,
-          mataKuliah: "Matematika Diskret",
-          sks: 2,
-          tingkat: "II",
-          prediksi: "A",
-        },
-        {
-          id: 2,
-          mataKuliah: "Matematika Diskret",
-          sks: 3,
-          tingkat: "II",
-          prediksi: "B",
-        },
-        {
-          id: 3,
-          mataKuliah: "Matematika Diskret",
-          sks: 3,
-          tingkat: "II",
-          prediksi: "AB",
-        },
-        {
-          id: 4,
-          mataKuliah: "Matematika Diskret",
-          sks: 3,
-          tingkat: "II",
-          prediksi: "E",
-        },
-      ]);
+    // Generate directly submits to results page
+    if (selectedSemester && selectedStudyPlan && allCoursesHavePrediksi) {
       setIsGenerated(true);
+      // Show loading dialog and then navigate to results
+      setIsLoadingDialogOpen(true);
+      // Simulate loading process
+      setTimeout(() => {
+        setIsLoadingDialogOpen(false);
+        setIsSubmitted(true);
+      }, 3000); // 3 seconds loading
     }
   };
+
+  // Check if all courses have prediksi (indeks nilai)
+  const allCoursesHavePrediksi = courses.length > 0 && courses.every((course) => course.prediksi !== "");
 
   const handleSubmit = () => {
     setIsLoadingDialogOpen(true);
@@ -120,6 +118,7 @@ export default function SimulasiIPK() {
       A: 4.0,
       AB: 3.5,
       B: 3.0,
+      BC: 2.5,
       C: 2.0,
       D: 1.0,
       E: 0.0,
@@ -130,6 +129,10 @@ export default function SimulasiIPK() {
   // Calculate IPS (Indeks Prestasi Semester)
   const calculateIPS = (): number => {
     if (courses.length === 0) return 0;
+    // Only calculate if all courses have prediksi
+    const allHavePrediksi = courses.every((course) => course.prediksi !== "");
+    if (!allHavePrediksi) return 0;
+    
     let totalNilai = 0;
     let totalSKS = 0;
     courses.forEach((course) => {
@@ -140,14 +143,28 @@ export default function SimulasiIPK() {
     return totalSKS > 0 ? totalNilai / totalSKS : 0;
   };
 
-  // Calculate IPK (Indeks Prestasi Kumulatif) - Mock data
+  // Calculate IPK (Indeks Prestasi Kumulatif)
+  // IPK dihitung dari IPS semester saat ini dan semester sebelumnya
+  // Untuk simulasi, kita asumsikan IPK adalah rata-rata dari semua semester
   const calculateIPK = (): number => {
-    // For now, return a mock value. In real app, this would be calculated from all semesters
-    return 3.68;
+    const currentIPS = calculateIPS();
+    // Mock: Asumsikan ada 2 semester sebelumnya dengan IPK rata-rata 3.5
+    // IPK kumulatif = (IPK sebelumnya * SKS sebelumnya + IPS saat ini * SKS saat ini) / Total SKS
+    const previousSKS = 60; // Mock: SKS dari semester sebelumnya
+    const previousIPK = 3.5; // Mock: IPK dari semester sebelumnya
+    const currentSKS = totalSKS;
+    const totalSKSAll = previousSKS + currentSKS;
+    
+    if (totalSKSAll === 0) return 0;
+    return ((previousIPK * previousSKS) + (currentIPS * currentSKS)) / totalSKSAll;
   };
 
-  // Mock total SKS selesai (completed credits)
-  const totalSKSSelesai = 120;
+  // Calculate total SKS selesai (completed credits)
+  // Total SKS selesai = SKS dari semester sebelumnya + SKS semester saat ini
+  const calculateTotalSKSSelesai = (): number => {
+    const previousSKS = 60; // Mock: SKS dari semester sebelumnya
+    return previousSKS + totalSKS;
+  };
 
   const handleDeleteCourse = (id: number) => {
     setCourseToDelete(id);
@@ -215,16 +232,23 @@ export default function SimulasiIPK() {
     sks: number;
   }) => {
     const newId = courses.length > 0 ? Math.max(...courses.map((c) => c.id)) + 1 : 1;
-    setCourses([
+    const newCourses = [
       ...courses,
       {
         id: newId,
         mataKuliah: course.nama,
         sks: course.sks,
         tingkat: course.tingkat,
-        prediksi: "A",
+        prediksi: "",
       },
-    ]);
+    ];
+    setCourses(newCourses);
+    
+    // Check if total SKS exceeds 24
+    const newTotalSKS = newCourses.reduce((sum, c) => sum + c.sks, 0);
+    if (newTotalSKS > 24) {
+      setIsSKSWarningOpen(true);
+    }
   };
 
 
@@ -239,6 +263,83 @@ export default function SimulasiIPK() {
   const totalSKS = courses.reduce((sum, course) => sum + course.sks, 0);
   const ips = calculateIPS();
   const ipk = calculateIPK();
+  const totalSKSSelesai = calculateTotalSKSSelesai();
+
+  // Check if there are unsaved changes (any course has prediksi or isGenerated is true or isSubmitted is true)
+  // We want to show confirmation even after submit, until user clicks "End Session"
+  const hasUnsavedChanges = isGenerated || isSubmitted || courses.some((course) => course.prediksi !== "");
+
+  // Handle beforeunload event (browser close/refresh)
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+  // Note: Navigation blocking via React Router is handled by intercepting navigation
+  // For browser close/refresh, beforeunload event is used above
+
+  // Handle exit confirmation
+  const handleExitConfirm = () => {
+    setIsExitConfirmationOpen(false);
+    // Reset all simulation data
+    setCourses([...defaultCoursesSemester3]);
+    setSelectedSemester("3");
+    setSelectedStudyPlan("");
+    setIsGenerated(false);
+    setIsSubmitted(false);
+    setIsDialogOpen(false);
+    setIsConfirmationDialogOpen(false);
+    setIsDeleteConfirmationOpen(false);
+    setIsDeleteSuccessOpen(false);
+    setCourseToDelete(null);
+    setEditingCourse(null);
+    setSearchQuery("");
+    setFilterTingkat("");
+    setIsLoadingDialogOpen(false);
+    // Navigate to dashboard
+    navigate("/dashboard");
+  };
+
+  const handleExitCancel = () => {
+    setIsExitConfirmationOpen(false);
+  };
+
+  // Handle End Session confirmation
+  const handleEndSessionConfirm = () => {
+    setIsEndSessionDialogOpen(false);
+    // Reset all simulation data
+    setCourses([...defaultCoursesSemester3]);
+    setSelectedSemester("3");
+    setSelectedStudyPlan("");
+    setIsGenerated(false);
+    setIsSubmitted(false);
+    setIsDialogOpen(false);
+    setIsConfirmationDialogOpen(false);
+    setIsDeleteConfirmationOpen(false);
+    setIsDeleteSuccessOpen(false);
+    setCourseToDelete(null);
+    setEditingCourse(null);
+    setSearchQuery("");
+    setFilterTingkat("");
+    setIsLoadingDialogOpen(false);
+    // Navigate to main page (dashboard)
+    navigate("/dashboard");
+  };
+
+  const handleEndSessionCancel = () => {
+    setIsEndSessionDialogOpen(false);
+  };
 
   // Result Page (after submit)
   if (isSubmitted) {
@@ -356,156 +457,300 @@ export default function SimulasiIPK() {
                 </button>
               </div>
 
-              {/* Summary Boxes */}
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* IPS Box */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    IPS
-                  </label>
-                  <input
-                    type="text"
-                    value={ips.toFixed(2)}
-                    readOnly
-                    className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700 text-lg font-medium"
-                  />
-                </div>
+              {/* Results Card */}
+              <div className="bg-white border border-gray-200 rounded-3xl shadow-xl p-6 md:p-8 space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* IPS Box */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      IPS
+                    </label>
+                    <input
+                      type="text"
+                      value={ips.toFixed(2)}
+                      readOnly
+                      className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700 text-lg font-medium"
+                    />
+                  </div>
 
-                {/* IPK Box */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    IPK
-                  </label>
-                  <input
-                    type="text"
-                    value={ipk.toFixed(2)}
-                    readOnly
-                    className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700 text-lg font-medium"
-                  />
-                </div>
+                  {/* IPK Box */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      IPK
+                    </label>
+                    <input
+                      type="text"
+                      value={ipk.toFixed(2)}
+                      readOnly
+                      className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700 text-lg font-medium"
+                    />
+                  </div>
 
-                {/* Total SKS Semester Box */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Total SKS Semester
-                  </label>
-                  <input
-                    type="text"
-                    value={totalSKS}
-                    readOnly
-                    className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700 text-lg font-medium"
-                  />
-                </div>
+                  {/* Total SKS Semester Box */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Total SKS Semester
+                    </label>
+                    <input
+                      type="text"
+                      value={totalSKS}
+                      readOnly
+                      className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700 text-lg font-medium"
+                    />
+                  </div>
 
-                {/* Total SKS Selesai Box */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Total SKS Selesai
-                  </label>
-                  <input
-                    type="text"
-                    value={totalSKSSelesai}
-                    readOnly
-                    className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700 text-lg font-medium"
-                  />
-                </div>
-              </div>
-
-              {/* Academic Status Table */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Academic Status
-                </h3>
-                <div className="bg-gray-100 rounded-2xl overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-gray-100">
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                            Mata Kuliah
-                          </th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                            SKS
-                          </th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                            Tingkat
-                          </th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                            Prediksi
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {courses.length === 0 ? (
-                          <tr>
-                            <td
-                              colSpan={4}
-                              className="px-4 py-8 text-center text-gray-500 bg-white"
-                            >
-                              No courses available
-                            </td>
-                          </tr>
-                        ) : (
-                          courses.map((course, index) => (
-                            <tr
-                              key={course.id}
-                              className={`${
-                                index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                              }`}
-                            >
-                              <td className="px-4 py-3 text-sm text-gray-700">
-                                {course.mataKuliah}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-700">
-                                {course.sks}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-700">
-                                {course.tingkat || ""}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-700">
-                                {course.prediksi || ""}
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+                  {/* Total SKS Selesai Box */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Total SKS Selesai
+                    </label>
+                    <input
+                      type="text"
+                      value={totalSKSSelesai}
+                      readOnly
+                      className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700 text-lg font-medium"
+                    />
                   </div>
                 </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <button
-                  onClick={() => setIsSubmitted(false)}
-                  className="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg transition-colors flex items-center gap-2"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                  Back
-                </button>
-                <div className="flex items-center gap-0 text-sm text-gray-500">
-                  <span>made by</span>
-                  <img
-                    src="/assets/images/logo-aira.png"
-                    alt="AIRA"
-                    className="w-12 h-12 -ml-1"
-                  />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Academic Status
+                  </h3>
+
+                  {/* Mobile Card Layout */}
+                  <div className="space-y-3 md:hidden">
+                    {courses.length === 0 ? (
+                      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-center text-gray-500">
+                        No courses available
+                      </div>
+                    ) : (
+                      courses.map((course) => (
+                        <div
+                          key={course.id}
+                          className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-2"
+                        >
+                          <div>
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                              Mata Kuliah
+                            </p>
+                            <p className="text-sm font-medium text-gray-800">
+                              {course.mataKuliah}
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                SKS
+                              </p>
+                              <p className="text-sm font-medium text-gray-800">
+                                {course.sks}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                Tingkat
+                              </p>
+                              <p className="text-sm font-medium text-gray-800">
+                                {course.tingkat || "-"}
+                              </p>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                              Prediksi
+                            </p>
+                            <p className="text-sm font-medium text-gray-800">
+                              {course.prediksi || "-"}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Desktop Table Layout */}
+                  <div className="hidden md:block bg-gray-100 rounded-2xl overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="bg-gray-100">
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                              Mata Kuliah
+                            </th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                              SKS
+                            </th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                              Tingkat
+                            </th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                              Prediksi
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {courses.length === 0 ? (
+                            <tr>
+                              <td
+                                colSpan={4}
+                                className="px-4 py-8 text-center text-gray-500 bg-white"
+                              >
+                                No courses available
+                              </td>
+                            </tr>
+                          ) : (
+                            courses.map((course, index) => (
+                              <tr
+                                key={course.id}
+                                className={`${
+                                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                }`}
+                              >
+                                <td className="px-4 py-3 text-sm text-gray-700">
+                                  {course.mataKuliah}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-700">
+                                  {course.sks}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-700">
+                                  {course.tingkat || ""}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-700">
+                                  {course.prediksi || ""}
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setIsSubmitted(false);
-                    setIsGenerated(false);
-                    navigate("/simulasi-ipk");
-                  }}
-                  className="px-6 py-2 bg-aira-primary hover:bg-aira-secondary text-white font-medium rounded-lg transition-colors flex items-center gap-2"
-                >
-                  <LogOut className="w-5 h-5" />
-                  End session
-                </button>
+
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                  <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={() => setIsSubmitted(false)}
+                      className="w-full sm:w-auto px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                      <span>Back</span>
+                    </button>
+                    <button
+                      onClick={() => setIsEndSessionDialogOpen(true)}
+                      className="w-full sm:w-auto px-6 py-2 bg-aira-primary hover:bg-aira-secondary text-white font-medium rounded-lg transition-colors flex items-center justify-center"
+                    >
+                      End Session
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-0 text-sm text-gray-500">
+                    <span>made by</span>
+                    <img
+                      src="/assets/images/logo-aira.png"
+                      alt="AIRA"
+                      className="w-12 h-12 -ml-1"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </main>
         </div>
+
+        {/* Exit Confirmation Dialog */}
+        <Dialog
+          open={isExitConfirmationOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleExitCancel();
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
+            <div className="relative bg-white rounded-lg text-center">
+              {/* Illustration */}
+              <div className="flex justify-center items-center pt-8 pb-4">
+                <img
+                  src="/assets/images/edit-ilustration.png"
+                  alt="Exit Confirmation"
+                  className="w-full max-w-[300px] h-auto object-contain"
+                />
+              </div>
+              {/* Question Text */}
+              <div className="px-6 pb-6">
+                <DialogTitle className="text-xl font-bold text-gray-800">
+                  Keluar dari Simulasi IPK?
+                </DialogTitle>
+              </div>
+              {/* Subtitle */}
+              <div className="px-6 pb-2">
+                <DialogDescription className="text-sm text-gray-600">
+                  Perubahan yang belum disimpan akan hilang. Apakah Anda yakin ingin keluar?
+                </DialogDescription>
+              </div>
+              {/* Buttons */}
+              <div className="flex justify-center gap-4 px-6 pb-6">
+                <button
+                  onClick={handleExitCancel}
+                  className="px-8 py-2 bg-aira-primary hover:bg-aira-secondary text-white font-medium rounded-lg transition-colors"
+                >
+                  No
+                </button>
+                <button
+                  onClick={handleExitConfirm}
+                  className="px-8 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg transition-colors"
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* End Session Confirmation Dialog */}
+        <Dialog
+          open={isEndSessionDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleEndSessionCancel();
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
+            <div className="relative bg-white rounded-lg text-center">
+              {/* Illustration */}
+              <div className="flex justify-center items-center pt-8 pb-4">
+                <img
+                  src="/assets/images/endSession-ilustration.png"
+                  alt="End Session Confirmation"
+                  className="w-full max-w-[300px] h-auto object-contain"
+                />
+              </div>
+              {/* Question Text */}
+              <div className="px-6 pb-6">
+                <DialogTitle className="text-xl font-bold text-gray-800">
+                  End Session?
+                </DialogTitle>
+              </div>
+              {/* Buttons */}
+              <div className="flex justify-center gap-4 px-6 pb-6">
+                <button
+                  onClick={handleEndSessionCancel}
+                  className="px-8 py-2 bg-[#690E0E] hover:bg-[#510a0a] text-white font-medium rounded-lg transition-colors"
+                >
+                  No
+                </button>
+                <button
+                  onClick={handleEndSessionConfirm}
+                  className="px-8 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg transition-colors"
+                >
+                  Yes, End Session
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Footer */}
         <Footer />
@@ -667,31 +912,103 @@ export default function SimulasiIPK() {
                   </div>
                 </div>
 
-                {/* Generate/Submit Button */}
+                {/* Generate Button */}
                 <div className="flex-1 md:flex-none">
-                  {!isGenerated ? (
-                    <button
-                      onClick={handleGenerate}
-                      disabled={!selectedSemester || !selectedStudyPlan}
-                      className="w-full md:w-auto px-8 py-3 bg-gray-700 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-[20px] transition-colors"
-                    >
-                      Generate
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleSubmit}
-                      className="w-full md:w-auto px-8 py-3 bg-gray-700 hover:bg-gray-800 text-white font-medium rounded-[20px] transition-colors"
-                    >
-                      Submit
-                    </button>
-                  )}
+                  <button
+                    onClick={handleGenerate}
+                    disabled={!selectedSemester || !selectedStudyPlan || !allCoursesHavePrediksi}
+                    className="w-full md:w-auto px-8 py-3 bg-gray-700 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-[20px] transition-colors"
+                  >
+                    Generate
+                  </button>
                 </div>
               </div>
             </div>
 
             {/* Table Section */}
             <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-              <div className="overflow-x-auto">
+              {/* Mobile Card Layout */}
+              <div className="md:hidden space-y-4">
+                {courses.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No courses available.
+                  </div>
+                ) : (
+                  courses.map((course) => (
+                    <div
+                      key={course.id}
+                      className="border border-gray-200 rounded-lg p-4 space-y-3 bg-white"
+                    >
+                      <div>
+                        <h4 className="font-semibold text-gray-900 text-sm mb-1">
+                          Mata Kuliah
+                        </h4>
+                        <p className="text-sm text-gray-700">{course.mataKuliah}</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 text-sm mb-1">
+                            SKS
+                          </h4>
+                          <p className="text-sm text-gray-700">{course.sks}</p>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 text-sm mb-1">
+                            Tingkat
+                          </h4>
+                          <p className="text-sm text-gray-700">{course.tingkat}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 text-sm mb-2">
+                          Prediksi
+                        </h4>
+                        <div className="relative inline-block group w-full">
+                          <select
+                            value={course.prediksi}
+                            onChange={(e) =>
+                              handleUpdatePrediksi(course.id, e.target.value)
+                            }
+                            className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-700 appearance-none focus:outline-none focus:ring-2 focus:ring-aira-primary focus:border-transparent cursor-pointer text-sm"
+                          >
+                            <option value="">Pilih</option>
+                            {prediksiOptions.map((prediksi) => (
+                              <option key={prediksi} value={prediksi}>
+                                {prediksi}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none transition-transform duration-200 group-focus-within:rotate-180" />
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 text-sm mb-2">
+                          Action
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEditCourse(course)}
+                            className="flex-1 px-3 py-2 bg-green-100 hover:bg-green-200 text-green-700 font-bold text-sm rounded-lg transition-colors flex items-center justify-center gap-2"
+                          >
+                            <Pencil className="w-4 h-4" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCourse(course.id)}
+                            className="flex-1 px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-bold text-sm rounded-lg transition-colors flex items-center justify-center gap-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop Table Layout */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b-2 border-gray-200">
@@ -719,8 +1036,7 @@ export default function SimulasiIPK() {
                           colSpan={5}
                           className="px-4 py-8 text-center text-gray-500"
                         >
-                          No courses available. Please select semester and study
-                          plan, then click Generate.
+                          No courses available.
                         </td>
                       </tr>
                     ) : (
@@ -747,6 +1063,7 @@ export default function SimulasiIPK() {
                                 }
                                 className="pl-3 pr-8 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-700 appearance-none focus:outline-none focus:ring-2 focus:ring-aira-primary focus:border-transparent cursor-pointer text-sm min-w-[70px]"
                               >
+                                <option value="">Pilih</option>
                                 {prediksiOptions.map((prediksi) => (
                                   <option key={prediksi} value={prediksi}>
                                     {prediksi}
@@ -760,15 +1077,15 @@ export default function SimulasiIPK() {
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => handleEditCourse(course)}
-                                className="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 font-bold text-sm rounded-lg transition-colors"
+                                className="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 font-bold text-sm rounded-lg transition-colors flex items-center justify-center"
                               >
-                                Edit
+                                <span>Edit</span>
                               </button>
                               <button
                                 onClick={() => handleDeleteCourse(course.id)}
-                                className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-bold text-sm rounded-lg transition-colors"
+                                className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-bold text-sm rounded-lg transition-colors flex items-center justify-center"
                               >
-                                Delete
+                                <span>Delete</span>
                               </button>
                             </div>
                           </td>
@@ -803,6 +1120,68 @@ export default function SimulasiIPK() {
                 </div>
               </div>
             </div>
+
+            {/* Summary Boxes - Shown after Generate */}
+            {isGenerated && (
+              <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                  Hasil Perhitungan
+                </h3>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* IPS Box */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      IPS (Indeks Prestasi Semester)
+                    </label>
+                    <input
+                      type="text"
+                      value={ips.toFixed(2)}
+                      readOnly
+                      className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700 text-lg font-medium"
+                    />
+                  </div>
+
+                  {/* IPK Box */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      IPK (Indeks Prestasi Kumulatif)
+                    </label>
+                    <input
+                      type="text"
+                      value={ipk.toFixed(2)}
+                      readOnly
+                      className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700 text-lg font-medium"
+                    />
+                  </div>
+
+                  {/* Total SKS Semester Box */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Total SKS Semester
+                    </label>
+                    <input
+                      type="text"
+                      value={totalSKS}
+                      readOnly
+                      className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700 text-lg font-medium"
+                    />
+                  </div>
+
+                  {/* Total SKS Selesai Box */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Total SKS Selesai
+                    </label>
+                    <input
+                      type="text"
+                      value={totalSKSSelesai}
+                      readOnly
+                      className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700 text-lg font-medium"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>
@@ -810,7 +1189,7 @@ export default function SimulasiIPK() {
       {/* Add Course Dialog - Search & Select */}
       {!editingCourse && (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:w-auto sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">
                 Tambah Mata Kuliah
@@ -933,7 +1312,7 @@ export default function SimulasiIPK() {
       {/* Edit Course Dialog - Search & Select */}
       {editingCourse && (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:w-auto sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">
                 Edit Mata Kuliah
@@ -1055,7 +1434,7 @@ export default function SimulasiIPK() {
         open={isDeleteConfirmationOpen}
         onOpenChange={setIsDeleteConfirmationOpen}
       >
-        <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
+        <DialogContent className="w-[90vw] sm:w-auto sm:max-w-[425px] p-0 overflow-hidden">
           <div className="relative bg-white rounded-lg text-center">
             {/* Trash Icon */}
             <div className="flex justify-center items-center pt-8 pb-4">
@@ -1100,7 +1479,7 @@ export default function SimulasiIPK() {
         open={isConfirmationDialogOpen}
         onOpenChange={setIsConfirmationDialogOpen}
       >
-        <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
+        <DialogContent className="w-[90vw] sm:w-auto sm:max-w-[425px] p-0 overflow-hidden">
           <div className="relative bg-white rounded-lg text-center">
             {/* Illustration */}
             <div className="flex justify-center items-center pt-8 pb-4">
@@ -1145,7 +1524,7 @@ export default function SimulasiIPK() {
         open={isDeleteSuccessOpen}
         onOpenChange={setIsDeleteSuccessOpen}
       >
-        <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
+        <DialogContent className="w-[90vw] sm:w-auto sm:max-w-[425px] p-0 overflow-hidden">
           <div className="relative bg-white rounded-lg text-center">
             {/* Trash Icon */}
             <div className="flex justify-center items-center pt-8 pb-4">
@@ -1175,7 +1554,7 @@ export default function SimulasiIPK() {
           // Prevent closing during loading - do nothing
         }}
       >
-        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-0 [&>button]:hidden">
+        <DialogContent className="w-[90vw] sm:w-auto sm:max-w-[500px] p-0 overflow-hidden border-0 [&>button]:hidden">
           <div className="relative bg-white rounded-lg">
             {/* Illustration */}
             <div className="flex justify-center items-center pt-8 pb-4">
@@ -1190,6 +1569,135 @@ export default function SimulasiIPK() {
               <p className="text-lg font-medium text-gray-700">
                 Generating Your Study Plan.....
               </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Exit Confirmation Dialog */}
+      <Dialog
+        open={isExitConfirmationOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleExitCancel();
+          }
+        }}
+      >
+        <DialogContent className="w-[90vw] sm:w-auto sm:max-w-[425px] p-0 overflow-hidden">
+          <div className="relative bg-white rounded-lg text-center">
+            {/* Illustration */}
+            <div className="flex justify-center items-center pt-8 pb-4">
+              <img
+                src="/assets/images/edit-ilustration.png"
+                alt="Exit Confirmation"
+                className="w-full max-w-[300px] h-auto object-contain"
+              />
+            </div>
+            {/* Question Text */}
+            <div className="px-6 pb-6">
+              <DialogTitle className="text-xl font-bold text-gray-800">
+                Keluar dari Simulasi IPK?
+              </DialogTitle>
+            </div>
+            {/* Subtitle */}
+            <div className="px-6 pb-2">
+              <DialogDescription className="text-sm text-gray-600">
+                Perubahan yang belum disimpan akan hilang. Apakah Anda yakin ingin keluar?
+              </DialogDescription>
+            </div>
+            {/* Buttons */}
+            <div className="flex justify-center gap-4 px-6 pb-6">
+              <button
+                onClick={handleExitCancel}
+                className="px-8 py-2 bg-aira-primary hover:bg-aira-secondary text-white font-medium rounded-lg transition-colors"
+              >
+                No
+              </button>
+              <button
+                onClick={handleExitConfirm}
+                className="px-8 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg transition-colors"
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* End Session Confirmation Dialog */}
+      <Dialog
+        open={isEndSessionDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleEndSessionCancel();
+          }
+        }}
+      >
+        <DialogContent className="w-[90vw] sm:w-auto sm:max-w-[425px] p-0 overflow-hidden">
+          <div className="relative bg-white rounded-lg text-center">
+            {/* Illustration */}
+            <div className="flex justify-center items-center pt-8 pb-4">
+              <img
+                src="/assets/images/endSession-ilustration.png"
+                alt="End Session Confirmation"
+                className="w-full max-w-[300px] h-auto object-contain"
+              />
+            </div>
+            {/* Question Text */}
+            <div className="px-6 pb-6">
+              <DialogTitle className="text-xl font-bold text-gray-800">
+                End Session?
+              </DialogTitle>
+            </div>
+            {/* Buttons */}
+            <div className="flex justify-center gap-4 px-6 pb-6">
+              <button
+                onClick={handleEndSessionCancel}
+                className="px-8 py-2 bg-[#690E0E] hover:bg-[#510a0a] text-white font-medium rounded-lg transition-colors"
+              >
+                No
+              </button>
+              <button
+                onClick={handleEndSessionConfirm}
+                className="px-8 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg transition-colors"
+              >
+                Yes, End Session
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* SKS Warning Dialog */}
+      <Dialog
+        open={isSKSWarningOpen}
+        onOpenChange={setIsSKSWarningOpen}
+      >
+        <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
+          <div className="relative bg-white rounded-lg text-center">
+            {/* Warning Icon */}
+            <div className="flex justify-center items-center pt-8 pb-4">
+              <div className="w-20 h-20 border-4 border-red-600 rounded-full flex items-center justify-center">
+                <span className="text-red-600 text-4xl font-bold">!</span>
+              </div>
+            </div>
+            {/* Warning Message */}
+            <div className="px-6 pb-6">
+              <DialogTitle className="text-xl font-bold text-gray-800 mb-2">
+                SKS yang diambil lebih dari 24
+              </DialogTitle>
+              <DialogDescription className="text-sm text-gray-600">
+                Total SKS yang Anda ambil melebihi batas maksimal 24 SKS per semester.
+              </DialogDescription>
+            </div>
+            {/* Button */}
+            <div className="flex justify-center px-6 pb-6">
+              <button
+                onClick={() => setIsSKSWarningOpen(false)}
+                className="px-8 py-2 bg-aira-primary hover:bg-aira-secondary text-white font-medium rounded-lg transition-colors"
+              >
+                OK
+              </button>
             </div>
           </div>
         </DialogContent>

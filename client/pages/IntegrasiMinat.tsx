@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { X, Plus, Search, ArrowLeft, Menu, Home, ChevronRight, LogOut } from "lucide-react";
 import Footer from "@/components/Footer";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 
 interface Skill {
   id: string;
@@ -318,28 +318,41 @@ export default function IntegrasiMinat() {
         </div>
 
         {/* End Session Confirmation Dialog */}
-        {showEndSessionDialog && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md mx-4">
-              <h3 className="text-lg font-semibold mb-4">Konfirmasi</h3>
-              <p className="text-gray-600 mb-6">Apakah kamu yakin ingin mengakhiri sesi?</p>
-              <div className="flex space-x-4 justify-end">
+        <Dialog open={showEndSessionDialog} onOpenChange={setShowEndSessionDialog}>
+          <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
+            <div className="relative bg-white rounded-lg text-center">
+              {/* Illustration */}
+              <div className="flex justify-center items-center pt-8 pb-4">
+                <img
+                  src="/assets/images/endSession-ilustration.png"
+                  alt="End Session Confirmation"
+                  className="w-full max-w-[300px] h-auto object-contain"
+                />
+              </div>
+              {/* Question Text */}
+              <div className="px-6 pb-6">
+                <DialogTitle className="text-xl font-bold text-gray-800">
+                  End Session?
+                </DialogTitle>
+              </div>
+              {/* Buttons */}
+              <div className="flex justify-center gap-4 px-6 pb-6">
                 <button
                   onClick={() => setShowEndSessionDialog(false)}
-                  className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+                  className="px-8 py-2 bg-[#690E0E] hover:bg-[#510a0a] text-white font-medium rounded-lg transition-colors"
                 >
-                  Batal
+                  No
                 </button>
                 <button
                   onClick={confirmEndSession}
-                  className="px-4 py-2 bg-[#8B2635] text-white rounded hover:bg-[#7A2230]"
+                  className="px-8 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg transition-colors"
                 >
-                  Ya, Akhiri
+                  Yes, End Session
                 </button>
               </div>
             </div>
-          </div>
-        )}
+          </DialogContent>
+        </Dialog>
 
         <Footer />
       </div>
