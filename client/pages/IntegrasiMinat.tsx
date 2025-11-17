@@ -500,22 +500,40 @@ export default function IntegrasiMinat() {
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B2635] focus:border-transparent"
                       />
                     </div>
-                    <div className="max-h-60 overflow-y-auto space-y-2">
-                      {filteredHardskills.map((skill) => (
-                        <div
-                          key={skill.id}
-                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border"
-                        >
-                          <span className="text-gray-800">{skill.name}</span>
-                          <button
-                            onClick={() => addHardskill(skill)}
-                            disabled={selectedHardskills.find(s => s.id === skill.id) !== undefined}
-                            className="p-1 bg-blue-200 rounded-full hover:bg-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <Plus className="w-4 h-4 text-blue-700" />
-                          </button>
+                    <div className="space-y-2">
+                      {filteredHardskills.length > 0 ? (
+                        <div className="max-h-60 overflow-y-auto space-y-2">
+                          {filteredHardskills.map((skill) => (
+                            <div
+                              key={skill.id}
+                              className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border"
+                            >
+                              <span className="text-gray-800">{skill.name}</span>
+                              <button
+                                onClick={() => addHardskill(skill)}
+                                disabled={selectedHardskills.find(s => s.id === skill.id) !== undefined}
+                                className="p-1 bg-blue-200 rounded-full hover:bg-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <Plus className="w-4 h-4 text-blue-700" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                          <img
+                            src="/assets/images/notfoundintegrasiminatsearch.png"
+                            alt="Hard Skill Not Found"
+                            className="w-40 h-40 mb-4"
+                          />
+                          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                            Hard Skill Not Found.
+                          </h3>
+                          <p className="text-gray-600 text-sm">
+                            AIRA couldn't detect any matching hard skills. Please try selecting again.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </DialogContent>
@@ -571,22 +589,40 @@ export default function IntegrasiMinat() {
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B2635] focus:border-transparent"
                       />
                     </div>
-                    <div className="max-h-60 overflow-y-auto space-y-2">
-                      {filteredSoftskills.map((skill) => (
-                        <div
-                          key={skill.id}
-                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border"
-                        >
-                          <span className="text-gray-800">{skill.name}</span>
-                          <button
-                            onClick={() => addSoftskill(skill)}
-                            disabled={selectedSoftskills.find(s => s.id === skill.id) !== undefined}
-                            className="p-1 bg-blue-200 rounded-full hover:bg-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <Plus className="w-4 h-4 text-blue-700" />
-                          </button>
+                    <div className="space-y-2">
+                      {filteredSoftskills.length > 0 ? (
+                        <div className="max-h-60 overflow-y-auto space-y-2">
+                          {filteredSoftskills.map((skill) => (
+                            <div
+                              key={skill.id}
+                              className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border"
+                            >
+                              <span className="text-gray-800">{skill.name}</span>
+                              <button
+                                onClick={() => addSoftskill(skill)}
+                                disabled={selectedSoftskills.find(s => s.id === skill.id) !== undefined}
+                                className="p-1 bg-blue-200 rounded-full hover:bg-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <Plus className="w-4 h-4 text-blue-700" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                          <img
+                            src="/assets/images/notfoundintegrasiminatsearch.png"
+                            alt="Soft Skill Not Found"
+                            className="w-40 h-40 mb-4"
+                          />
+                          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                            Soft Skill Not Found.
+                          </h3>
+                          <p className="text-gray-600 text-sm">
+                            AIRA couldn't detect any matching soft skills. Please try selecting again.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </DialogContent>

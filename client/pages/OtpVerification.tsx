@@ -18,6 +18,10 @@ export default function OtpVerification() {
     {
       image: "/assets/images/login-illustration2.png",
       text: "Advancing Knowledge Through Technology"
+    },
+    {
+      image: "/assets/images/login-illustration3.png",
+      text: "Building Tomorrow's Architecture on Our Expertise"
     }
   ];
 

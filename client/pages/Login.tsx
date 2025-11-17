@@ -19,6 +19,10 @@ export default function Login() {
     {
       image: "/assets/images/login-illustration2.png",
       text: "Advancing Knowledge Through Technology"
+    },
+    {
+      image: "/assets/images/login-illustration3.png",
+      text: "Building Tomorrow with Our Expertise"
     }
   ];
 
@@ -121,7 +125,7 @@ export default function Login() {
                 />
                 {errors.username && (
                   <p className="text-[#D71616] text-sm opacity-60">
-                    Please input username
+                    *Please input username
                   </p>
                 )}
               </div>
@@ -149,7 +153,7 @@ export default function Login() {
                 </div>
                 {errors.password && (
                   <p className="text-[#D71616] text-sm opacity-60">
-                    Please enter password
+                    *Please enter password
                   </p>
                 )}
               </div>
