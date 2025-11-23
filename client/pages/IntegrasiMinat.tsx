@@ -3,6 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { X, Plus, Search, ArrowLeft, Menu, Home, ChevronRight, LogOut } from "lucide-react";
 import Footer from "@/components/Footer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { interestsService } from "@/lib/api-service";
+import { getAuthToken, removeAuthToken } from "@/lib/api-config";
+import { useToast } from "@/hooks/use-toast";
 
 interface Skill {
   id: string;
@@ -22,6 +25,7 @@ interface Recommendation {
 
 export default function IntegrasiMinat() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedHardskills, setSelectedHardskills] = useState<SelectedSkill[]>([]);
   const [selectedSoftskills, setSelectedSoftskills] = useState<SelectedSkill[]>([]);
@@ -34,58 +38,64 @@ export default function IntegrasiMinat() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [showEndSessionDialog, setShowEndSessionDialog] = useState(false);
   const [error, setError] = useState("");
+  const [availableSkills, setAvailableSkills] = useState<{hard_skills: string[], soft_skills: string[]}>({hard_skills: [], soft_skills: []});
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data untuk hardskills
-  const hardskills: Skill[] = [
-    { id: "1", name: "Matematika Diskrit" },
-    { id: "2", name: "Machine Learning" },
-    { id: "3", name: "Algoritma Pemograman" },
-    { id: "4", name: "Natural Language Processing" },
-    { id: "5", name: "Artificial Intelligence" },
-    { id: "6", name: "Data Visualization" },
-    { id: "7", name: "UI/UX Design" },
-    { id: "8", name: "Web Development" },
-    { id: "9", name: "Database Management" },
-    { id: "10", name: "Mobile Development" }
-  ];
-
-  // Mock data untuk softskills
-  const softskills: Skill[] = [
-    { id: "1", name: "Project Management" },
-    { id: "2", name: "Detail-Oriented" },
-    { id: "3", name: "Communication" },
-    { id: "4", name: "Leadership" },
-    { id: "5", name: "Critical Thinking" },
-    { id: "6", name: "Problem Solving" },
-    { id: "7", name: "Teamwork" },
-    { id: "8", name: "Time Management" },
-    { id: "9", name: "Creativity" },
-    { id: "10", name: "Adaptability" }
-  ];
-
-  // Mock recommendations
-  const mockRecommendations: Recommendation[] = [
-    {
-      id: 1,
-      title: "Machine Learning",
-      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-    },
-    {
-      id: 2,
-      title: "Data Visualization",
-      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-    },
-    {
-      id: 3,
-      title: "Natural Language Processing",
-      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-    },
-    {
-      id: 4,
-      title: "Big Data",
-      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+  // Load initial data from API
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) {
+      navigate("/login");
+      return;
     }
-  ];
+
+    const loadInterests = async () => {
+      try {
+        const response: any = await interestsService.getInterests();
+        if (response.success) {
+          setAvailableSkills(response.data.available_options);
+          // Set user's current interests
+          if (response.data.user_interests) {
+            const userHardSkills = response.data.user_interests.hard_skills.map((skill: string, index: number) => ({
+              id: index.toString(),
+              name: skill
+            }));
+            const userSoftSkills = response.data.user_interests.soft_skills.map((skill: string, index: number) => ({
+              id: index.toString(),
+              name: skill
+            }));
+            setSelectedHardskills(userHardSkills);
+            setSelectedSoftskills(userSoftSkills);
+          }
+        }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Gagal memuat data minat",
+        });
+        if (error instanceof Error && error.message.includes('authorized')) {
+          removeAuthToken();
+          navigate("/login");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInterests();
+  }, [navigate, toast]);
+
+  // Convert API data to Skill format
+  const hardskills: Skill[] = availableSkills.hard_skills.map((skill, index) => ({
+    id: index.toString(),
+    name: skill
+  }));
+
+  const softskills: Skill[] = availableSkills.soft_skills.map((skill, index) => ({
+    id: index.toString(),
+    name: skill
+  }));
 
   const filteredHardskills = hardskills.filter(skill =>
     skill.name.toLowerCase().includes(hardskillSearch.toLowerCase())
@@ -129,7 +139,7 @@ export default function IntegrasiMinat() {
     setSelectedSoftskills(selectedSoftskills.filter(s => s.id !== skillId));
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!canGenerate) {
       setError("Tambahkan minimal satu hardskill dan satu softskill untuk melanjutkan.");
       return;
@@ -138,12 +148,40 @@ export default function IntegrasiMinat() {
     setIsGenerating(true);
     setError("");
 
-    // Simulate processing time
-    setTimeout(() => {
-      setRecommendations(mockRecommendations);
+    try {
+      // First save the interests
+      await interestsService.updateInterests({
+        hard_skills: selectedHardskills.map(skill => skill.name),
+        soft_skills: selectedSoftskills.map(skill => skill.name)
+      });
+
+      // Then get recommendations
+      const recResponse: any = await interestsService.getRecommendations();
+      if (recResponse.success && recResponse.data?.recommendations) {
+        const formattedRecs = recResponse.data.recommendations.map((rec: any, index: number) => ({
+          id: index + 1,
+          title: rec.name || rec.nama_mk || rec.title,
+          description: rec.description || "Mata kuliah yang direkomendasikan berdasarkan minat Anda."
+        }));
+        setRecommendations(formattedRecs);
+      } else {
+        // Fallback if no recommendations
+        setRecommendations([{
+          id: 1,
+          title: "Rekomendasi akan ditampilkan di sini",
+          description: "Sistem sedang memproses minat Anda. Silakan coba lagi nanti."
+        }]);
+      }
       setShowResults(true);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Gagal menghasilkan rekomendasi. Silakan coba lagi.",
+      });
+    } finally {
       setIsGenerating(false);
-    }, 3000);
+    }
   };
 
   const handleBack = () => {
@@ -161,7 +199,7 @@ export default function IntegrasiMinat() {
     setShowResults(false);
     setShowEndSessionDialog(false);
     // Navigate to dashboard or home
-    window.location.href = "/dashboard";
+    navigate("/dashboard");
   };
 
   // Show warning before page unload if data exists
@@ -176,6 +214,17 @@ export default function IntegrasiMinat() {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [selectedHardskills, selectedSoftskills, showResults]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-aira-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat data...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (showResults) {
     return (

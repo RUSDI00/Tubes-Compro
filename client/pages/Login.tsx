@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, ArrowLeft } from "lucide-react";
 import Footer from "@/components/Footer";
+import { authService } from "@/lib/api-service";
+import { setAuthToken } from "@/lib/api-config";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -9,7 +12,9 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ username: false, password: false });
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const slides = [
     {
@@ -34,7 +39,7 @@ export default function Login() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors = {
       username: !username,
@@ -43,7 +48,34 @@ export default function Login() {
     setErrors(newErrors);
 
     if (!newErrors.username && !newErrors.password) {
-      navigate("/otp-verification");
+      setIsLoading(true);
+      try {
+        const response = await authService.login(username, password);
+        
+        if (response.success) {
+          // Store the token
+          setAuthToken(response.data.token);
+          
+          // Store user data in localStorage for later use
+          localStorage.setItem('userData', JSON.stringify(response.data));
+          
+          toast({
+            title: "Login Berhasil",
+            description: `Selamat datang, ${response.data.nama}!`,
+          });
+          
+          // Skip OTP and go directly to dashboard
+          navigate("/dashboard");
+        }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Login Gagal",
+          description: error instanceof Error ? error.message : "Terjadi kesalahan saat login",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -161,9 +193,10 @@ export default function Login() {
               {/* Login Button */}
               <button
                 type="submit"
-                className="w-full py-5 rounded-[20px] border border-aira-gray-medium bg-aira-primary hover:bg-aira-secondary transition-colors text-white text-2xl font-bold"
+                disabled={isLoading}
+                className="w-full py-5 rounded-[20px] border border-aira-gray-medium bg-aira-primary hover:bg-aira-secondary transition-colors text-white text-2xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Login
+                {isLoading ? "Loading..." : "Login"}
               </button>
             </form>
           </div>

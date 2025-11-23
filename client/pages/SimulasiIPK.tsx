@@ -9,6 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { simulationService, coursesService } from "@/lib/api-service";
+import { getAuthToken, removeAuthToken } from "@/lib/api-config";
+import { useToast } from "@/hooks/use-toast";
 
 // Default courses for semester 3
 const defaultCoursesSemester3 = [
@@ -23,9 +26,10 @@ const defaultCoursesSemester3 = [
 
 export default function SimulasiIPK() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedSemester, setSelectedSemester] = useState("3");
-  const [selectedStudyPlan, setSelectedStudyPlan] = useState("");
+  const [selectedStudyPlan, setSelectedStudyPlan] = useState("Reguler");
   const [courses, setCourses] = useState<
     Array<{
       id: number;
@@ -34,8 +38,67 @@ export default function SimulasiIPK() {
       tingkat: string;
       prediksi: string;
     }>
-  >([...defaultCoursesSemester3]);
+  >([]);
+  const [availableCourses, setAvailableCourses] = useState<any[]>([]);
+  const [simulationResult, setSimulationResult] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Load initial data
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const loadData = async () => {
+      try {
+        // Load simulation plan
+        const planResponse: any = await simulationService.getSimulationPlan(
+          parseInt(selectedSemester),
+          selectedStudyPlan
+        );
+        
+        if (planResponse.success && planResponse.data) {
+          const formattedCourses = planResponse.data.map((course: any, index: number) => ({
+            id: index + 1,
+            mataKuliah: course.nama_mk || course.nama,
+            sks: course.sks || 3,
+            tingkat: course.tingkat || "II",
+            prediksi: ""
+          }));
+          setCourses(formattedCourses);
+        } else {
+          // Use default if no data
+          setCourses([...defaultCoursesSemester3]);
+        }
+
+        // Load available courses for adding
+        const coursesResponse: any = await coursesService.getCourses();
+        if (coursesResponse.success) {
+          // Backend returns data as array directly, not data.courses
+          setAvailableCourses(coursesResponse.data || []);
+        }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Gagal memuat data simulasi",
+        });
+        if (error instanceof Error && error.message.includes('authorized')) {
+          removeAuthToken();
+          navigate("/login");
+        }
+        // Use default on error
+        setCourses([...defaultCoursesSemester3]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [selectedSemester, selectedStudyPlan, navigate, toast]);
   const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] = useState(false);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [isDeleteSuccessOpen, setIsDeleteSuccessOpen] = useState(false);
@@ -50,31 +113,23 @@ export default function SimulasiIPK() {
   const [isEndSessionDialogOpen, setIsEndSessionDialogOpen] = useState(false);
   const [isSKSWarningOpen, setIsSKSWarningOpen] = useState(false);
 
-  // Mock data untuk daftar mata kuliah yang tersedia
-  const availableCourses = [
-    { id: 1, nama: "Organisasi dan arsitektur komputer", tingkat: "II", sks: 3 },
-    { id: 2, nama: "Struktur data", tingkat: "II", sks: 3 },
-    { id: 3, nama: "Analisis Kompleksitas Algoritma", tingkat: "II", sks: 3 },
-    { id: 4, nama: "Sistem Basis Data", tingkat: "II", sks: 3 },
-    { id: 5, nama: "Teori Peluang", tingkat: "II", sks: 3 },
-    { id: 6, nama: "Wawasan Global TIK", tingkat: "II", sks: 2 },
-    { id: 7, nama: "RPL : Analisis dan Perancangan Aplikasi", tingkat: "III", sks: 3 },
-    { id: 8, nama: "Matematika Diskrit", tingkat: "I", sks: 4 },
-    { id: 9, nama: "Algoritma dan Struktur Data", tingkat: "II", sks: 4 },
-    { id: 10, nama: "Pemrograman Web", tingkat: "III", sks: 3 },
-    { id: 11, nama: "Sistem Operasi", tingkat: "III", sks: 3 },
-    { id: 12, nama: "Jaringan Komputer", tingkat: "III", sks: 3 },
-    { id: 13, nama: "Kalkulus", tingkat: "I", sks: 4 },
-    { id: 14, nama: "Fisika Dasar", tingkat: "I", sks: 3 },
-    { id: 15, nama: "Pemrograman Berorientasi Objek", tingkat: "II", sks: 4 },
-  ];
+  // Use availableCourses from state (loaded from API)
 
   // Filter courses berdasarkan search dan tingkat
   const filteredCourses = availableCourses.filter((course) => {
-    const matchesSearch = course.nama
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesTingkat = !filterTingkat || course.tingkat === filterTingkat;
+    const courseName = course.nama_mk || course.nama || '';
+    const matchesSearch = courseName.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Map frontend filter to backend format
+    const tingkatMap: { [key: string]: string } = {
+      'I': 'TINGKAT I',
+      'II': 'TINGKAT II', 
+      'III': 'TINGKAT III',
+      'IV': 'TINGKAT IV'
+    };
+    
+    const backendTingkat = tingkatMap[filterTingkat] || filterTingkat;
+    const matchesTingkat = !filterTingkat || course.tingkat === backendTingkat;
     return matchesSearch && matchesTingkat;
   });
 
@@ -86,30 +141,81 @@ export default function SimulasiIPK() {
 
   const tingkatOptions = ["I", "II", "III", "IV"];
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     // Generate directly submits to results page
     if (selectedSemester && selectedStudyPlan && allCoursesHavePrediksi) {
       setIsGenerated(true);
-      // Show loading dialog and then navigate to results
       setIsLoadingDialogOpen(true);
-      // Simulate loading process
-      setTimeout(() => {
+      
+      try {
+        const simulatedCourses = courses.map(course => ({
+          nama_mk: course.mataKuliah,
+          sks: course.sks,
+          nilai: course.prediksi
+        }));
+
+        const response: any = await simulationService.calculateSimulation({
+          target_semester: parseInt(selectedSemester),
+          study_plan: selectedStudyPlan,
+          simulated_courses: simulatedCourses
+        });
+
+        if (response.success) {
+          setSimulationResult(response.data);
+          setIsSubmitted(true);
+          toast({
+            title: "Simulasi Berhasil",
+            description: "Hasil simulasi IPK telah dihitung!",
+          });
+        }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Gagal menghitung simulasi IPK",
+        });
+      } finally {
         setIsLoadingDialogOpen(false);
-        setIsSubmitted(true);
-      }, 3000); // 3 seconds loading
+      }
     }
   };
 
   // Check if all courses have prediksi (indeks nilai)
   const allCoursesHavePrediksi = courses.length > 0 && courses.every((course) => course.prediksi !== "");
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsLoadingDialogOpen(true);
-    // Simulate loading process
-    setTimeout(() => {
+    
+    try {
+      const simulatedCourses = courses.map(course => ({
+        nama_mk: course.mataKuliah,
+        sks: course.sks,
+        nilai: course.prediksi
+      }));
+
+      const response: any = await simulationService.calculateSimulation({
+        target_semester: parseInt(selectedSemester),
+        study_plan: selectedStudyPlan,
+        simulated_courses: simulatedCourses
+      });
+
+      if (response.success) {
+        setSimulationResult(response.data);
+        setIsSubmitted(true);
+        toast({
+          title: "Simulasi Berhasil",
+          description: "Hasil simulasi IPK telah dihitung!",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Gagal menghitung simulasi IPK",
+      });
+    } finally {
       setIsLoadingDialogOpen(false);
-      setIsSubmitted(true);
-    }, 3000); // 3 seconds loading
+    }
   };
 
   // Convert prediksi to numeric value
@@ -126,8 +232,12 @@ export default function SimulasiIPK() {
     return nilaiMap[prediksi] || 0;
   };
 
-  // Calculate IPS (Indeks Prestasi Semester)
+  // Calculate IPS (Indeks Prestasi Semester) - use API result if available
   const calculateIPS = (): number => {
+    if (simulationResult?.ips_semester) {
+      return simulationResult.ips_semester;
+    }
+    
     if (courses.length === 0) return 0;
     // Only calculate if all courses have prediksi
     const allHavePrediksi = courses.every((course) => course.prediksi !== "");
@@ -143,13 +253,14 @@ export default function SimulasiIPK() {
     return totalSKS > 0 ? totalNilai / totalSKS : 0;
   };
 
-  // Calculate IPK (Indeks Prestasi Kumulatif)
-  // IPK dihitung dari IPS semester saat ini dan semester sebelumnya
-  // Untuk simulasi, kita asumsikan IPK adalah rata-rata dari semua semester
+  // Calculate IPK (Indeks Prestasi Kumulatif) - use API result if available
   const calculateIPK = (): number => {
+    if (simulationResult?.ipk_kumulatif) {
+      return simulationResult.ipk_kumulatif;
+    }
+    
     const currentIPS = calculateIPS();
-    // Mock: Asumsikan ada 2 semester sebelumnya dengan IPK rata-rata 3.5
-    // IPK kumulatif = (IPK sebelumnya * SKS sebelumnya + IPS saat ini * SKS saat ini) / Total SKS
+    // Fallback calculation
     const previousSKS = 60; // Mock: SKS dari semester sebelumnya
     const previousIPK = 3.5; // Mock: IPK dari semester sebelumnya
     const currentSKS = totalSKS;
@@ -159,9 +270,12 @@ export default function SimulasiIPK() {
     return ((previousIPK * previousSKS) + (currentIPS * currentSKS)) / totalSKSAll;
   };
 
-  // Calculate total SKS selesai (completed credits)
-  // Total SKS selesai = SKS dari semester sebelumnya + SKS semester saat ini
+  // Calculate total SKS selesai (completed credits) - use API result if available
   const calculateTotalSKSSelesai = (): number => {
+    if (simulationResult?.total_sks_completed) {
+      return simulationResult.total_sks_completed;
+    }
+    // Fallback calculation
     const previousSKS = 60; // Mock: SKS dari semester sebelumnya
     return previousSKS + totalSKS;
   };
@@ -192,8 +306,10 @@ export default function SimulasiIPK() {
   };
 
   const handleUpdateCourseFromList = (course: {
-    id: number;
-    nama: string;
+    _id?: string;
+    id?: number;
+    nama_mk?: string;
+    nama?: string;
     tingkat: string;
     sks: number;
   }) => {
@@ -204,7 +320,7 @@ export default function SimulasiIPK() {
           c.id === editingCourse
             ? {
                 ...c,
-                mataKuliah: course.nama,
+                mataKuliah: course.nama_mk || course.nama || 'Mata Kuliah',
                 sks: course.sks,
                 tingkat: course.tingkat,
               }
@@ -226,8 +342,10 @@ export default function SimulasiIPK() {
   };
 
   const handleAddCourseFromList = (course: {
-    id: number;
-    nama: string;
+    _id?: string;
+    id?: number;
+    nama_mk?: string;
+    nama?: string;
     tingkat: string;
     sks: number;
   }) => {
@@ -236,7 +354,7 @@ export default function SimulasiIPK() {
       ...courses,
       {
         id: newId,
-        mataKuliah: course.nama,
+        mataKuliah: course.nama_mk || course.nama || 'Mata Kuliah',
         sks: course.sks,
         tingkat: course.tingkat,
         prediksi: "",
@@ -316,12 +434,21 @@ export default function SimulasiIPK() {
   };
 
   // Handle End Session confirmation
-  const handleEndSessionConfirm = () => {
+  const handleEndSessionConfirm = async () => {
     setIsEndSessionDialogOpen(false);
+    
+    try {
+      // Call end session API
+      await simulationService.endSession();
+    } catch (error) {
+      console.warn("Failed to end simulation session:", error);
+      // Continue anyway since it's not critical
+    }
+    
     // Reset all simulation data
-    setCourses([...defaultCoursesSemester3]);
+    setCourses([]);
     setSelectedSemester("3");
-    setSelectedStudyPlan("");
+    setSelectedStudyPlan("Reguler");
     setIsGenerated(false);
     setIsSubmitted(false);
     setIsDialogOpen(false);
@@ -333,6 +460,7 @@ export default function SimulasiIPK() {
     setSearchQuery("");
     setFilterTingkat("");
     setIsLoadingDialogOpen(false);
+    setSimulationResult(null);
     // Navigate to main page (dashboard)
     navigate("/dashboard");
   };
@@ -340,6 +468,18 @@ export default function SimulasiIPK() {
   const handleEndSessionCancel = () => {
     setIsEndSessionDialogOpen(false);
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-aira-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat data simulasi...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Result Page (after submit)
   if (isSubmitted) {
@@ -1277,7 +1417,7 @@ export default function SimulasiIPK() {
                           }`}
                         >
                           <td className="px-4 py-3 text-sm text-gray-700">
-                            {course.nama}
+                            {course.nama_mk || course.nama}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {course.tingkat}
@@ -1400,7 +1540,7 @@ export default function SimulasiIPK() {
                           }`}
                         >
                           <td className="px-4 py-3 text-sm text-gray-700">
-                            {course.nama}
+                            {course.nama_mk || course.nama}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {course.tingkat}

@@ -1,18 +1,103 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import Footer from "@/components/Footer";
+import { menuService } from "@/lib/api-service";
+import { getAuthToken, removeAuthToken } from "@/lib/api-config";
+import { useToast } from "@/hooks/use-toast";
+
+interface ProfileData {
+  nama: string;
+  nim: string;
+  email_sso: string;
+  jurusan: string;
+  fakultas: string;
+  angkatan: number;
+  semester: string;
+  ipk: number;
+  sks_completed: number;
+  tak: number;
+  ikk: number;
+  sks_tingkat: {
+    tingkat_1: string;
+    tingkat_2: string;
+    tingkat_3: string;
+    tingkat_4: string;
+  };
+  ip_tingkat: {
+    tingkat_1: string;
+    tingkat_2: string;
+    tingkat_3: string;
+    tingkat_4: string;
+  };
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  const academicData = [
-    { tingkat: "I", sks: 38, status: "Lulus tanggal 22/08/2023", ips: "3.60" },
-    { tingkat: "II", sks: 20, status: "Belum Lulus", ips: "3.70" },
-    { tingkat: "III", sks: 15, status: "Belum Lulus", ips: "3.65" },
-    { tingkat: "IV", sks: 11, status: "Belum Lulus", ips: "3.75" },
-  ];
+  // Generate academic data from profile data
+  const academicData = profileData ? [
+    { 
+      tingkat: "I", 
+      sks: profileData.sks_tingkat?.tingkat_1 || "-", 
+      status: profileData.sks_tingkat?.tingkat_1 && profileData.sks_tingkat.tingkat_1 !== "-" ? "Lulus" : "Belum Lulus", 
+      ips: profileData.ip_tingkat?.tingkat_1 || "-" 
+    },
+    { 
+      tingkat: "II", 
+      sks: profileData.sks_tingkat?.tingkat_2 || "-", 
+      status: profileData.sks_tingkat?.tingkat_2 && profileData.sks_tingkat.tingkat_2 !== "-" ? "Lulus" : "Belum Lulus", 
+      ips: profileData.ip_tingkat?.tingkat_2 || "-" 
+    },
+    { 
+      tingkat: "III", 
+      sks: profileData.sks_tingkat?.tingkat_3 || "-", 
+      status: profileData.sks_tingkat?.tingkat_3 && profileData.sks_tingkat.tingkat_3 !== "-" ? "Lulus" : "Belum Lulus", 
+      ips: profileData.ip_tingkat?.tingkat_3 || "-" 
+    },
+    { 
+      tingkat: "IV", 
+      sks: profileData.sks_tingkat?.tingkat_4 || "-", 
+      status: profileData.sks_tingkat?.tingkat_4 && profileData.sks_tingkat.tingkat_4 !== "-" ? "Lulus" : "Belum Lulus", 
+      ips: profileData.ip_tingkat?.tingkat_4 || "-" 
+    },
+  ] : [];
+
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const loadDashboardData = async () => {
+      try {
+        const menuData: any = await menuService.getMainMenu();
+        if (menuData.success) {
+          setProfileData(menuData.data.profile);
+        }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Gagal memuat data dashboard",
+        });
+        // If auth fails, redirect to login
+        if (error instanceof Error && error.message.includes('authorized')) {
+          removeAuthToken();
+          navigate("/login");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [navigate, toast]);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -81,7 +166,11 @@ export default function Dashboard() {
             </button>
             <div className="flex-1"></div>
             <button 
-              onClick={() => navigate("/")}
+              onClick={() => {
+                removeAuthToken();
+                localStorage.removeItem('userData');
+                navigate("/");
+              }}
               className="w-full text-left py-3 px-4 rounded-lg hover:bg-white/20 transition-colors font-medium text-white"
             >
               Log Out
@@ -111,9 +200,9 @@ export default function Dashboard() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <h2 className="text-2xl font-bold text-black">John Doe</h2>
+                <h2 className="text-2xl font-bold text-black">{profileData?.nama || 'Loading...'}</h2>
                 <p className="text-sm text-gray-600 underline">
-                  JohnDoe@student.telkomuniversity.ac.id
+                  {profileData?.email_sso || 'Loading...'}
                 </p>
               </div>
 
@@ -126,7 +215,7 @@ export default function Dashboard() {
                   </label>
                   <input
                     type="text"
-                    value="Salma Safira Ramandha"
+                    value={profileData?.nama || ''}
                     readOnly
                     className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700"
                   />
@@ -139,7 +228,7 @@ export default function Dashboard() {
                   </label>
                   <input
                     type="email"
-                    value="salmasafira@student.telkomuniversity.ac.id"
+                    value={profileData?.email_sso || ''}
                     readOnly
                     className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700"
                   />
@@ -153,7 +242,7 @@ export default function Dashboard() {
                     </label>
                     <input
                       type="text"
-                      value="1301223383"
+                      value={profileData?.nim || ''}
                       readOnly
                       className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700"
                     />
@@ -164,7 +253,7 @@ export default function Dashboard() {
                     </label>
                     <input
                       type="text"
-                      value="S1 Informatika"
+                      value={profileData?.jurusan || ''}
                       readOnly
                       className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700"
                     />
@@ -179,7 +268,7 @@ export default function Dashboard() {
                     </label>
                     <input
                       type="text"
-                      value="2022"
+                      value={profileData?.angkatan?.toString() || ''}
                       readOnly
                       className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700"
                     />
@@ -190,7 +279,7 @@ export default function Dashboard() {
                     </label>
                     <input
                       type="text"
-                      value="Informatika"
+                      value={profileData?.fakultas || ''}
                       readOnly
                       className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700"
                     />
@@ -205,7 +294,7 @@ export default function Dashboard() {
                     </label>
                     <input
                       type="text"
-                      value="84"
+                      value={profileData?.sks_completed?.toString() || ''}
                       readOnly
                       className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700"
                     />
@@ -216,7 +305,7 @@ export default function Dashboard() {
                     </label>
                     <input
                       type="text"
-                      value="3.50"
+                      value={profileData?.ipk?.toString() || ''}
                       readOnly
                       className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700"
                     />
@@ -279,7 +368,7 @@ export default function Dashboard() {
                     </label>
                     <input
                       type="text"
-                      value="60"
+                      value={profileData?.tak?.toString() || ''}
                       readOnly
                       className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700"
                     />
@@ -290,7 +379,7 @@ export default function Dashboard() {
                     </label>
                     <input
                       type="text"
-                      value="3.00"
+                      value={profileData?.ikk?.toString() || ''}
                       readOnly
                       className="w-full px-6 py-4 rounded-[20px] border border-gray-300 bg-gray-50 text-gray-700"
                     />
