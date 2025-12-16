@@ -1,4 +1,4 @@
-// Base URL for API
+// Base URL for API (localhost only)
 export const API_BASE_URL = 'http://localhost:5001/api';
 
 // API endpoints

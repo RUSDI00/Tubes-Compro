@@ -51,22 +51,17 @@ export default function IntegrasiMinat() {
 
     const loadInterests = async () => {
       try {
+        // Clear interests on page load to ensure fresh start
+        await interestsService.clearInterests();
+        
         const response: any = await interestsService.getInterests();
         if (response.success) {
           setAvailableSkills(response.data.available_options);
-          // Set user's current interests
-          if (response.data.user_interests) {
-            const userHardSkills = response.data.user_interests.hard_skills.map((skill: string, index: number) => ({
-              id: index.toString(),
-              name: skill
-            }));
-            const userSoftSkills = response.data.user_interests.soft_skills.map((skill: string, index: number) => ({
-              id: index.toString(),
-              name: skill
-            }));
-            setSelectedHardskills(userHardSkills);
-            setSelectedSoftskills(userSoftSkills);
-          }
+          // Always start with empty selections
+          setSelectedHardskills([]);
+          setSelectedSoftskills([]);
+          setRecommendations([]);
+          setShowResults(false);
         }
       } catch (error) {
         toast({
@@ -161,7 +156,7 @@ export default function IntegrasiMinat() {
         const formattedRecs = recResponse.data.recommendations.map((rec: any, index: number) => ({
           id: index + 1,
           title: rec.name || rec.nama_mk || rec.title,
-          description: rec.description || "Mata kuliah yang direkomendasikan berdasarkan minat Anda."
+          description: rec.reason || rec.description || "Mata kuliah yang direkomendasikan berdasarkan minat Anda."
         }));
         setRecommendations(formattedRecs);
       } else {
@@ -192,14 +187,25 @@ export default function IntegrasiMinat() {
     setShowEndSessionDialog(true);
   };
 
-  const confirmEndSession = () => {
-    // Reset all state
-    setSelectedHardskills([]);
-    setSelectedSoftskills([]);
-    setShowResults(false);
-    setShowEndSessionDialog(false);
-    // Navigate to dashboard or home
-    navigate("/dashboard");
+  const confirmEndSession = async () => {
+    try {
+      // Clear interests from backend
+      await interestsService.clearInterests();
+      // Reset all state
+      setSelectedHardskills([]);
+      setSelectedSoftskills([]);
+      setRecommendations([]);
+      setShowResults(false);
+      setShowEndSessionDialog(false);
+      // Navigate to dashboard or home
+      navigate("/dashboard");
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Gagal mengakhiri sesi",
+      });
+    }
   };
 
   // Show warning before page unload if data exists
@@ -230,18 +236,18 @@ export default function IntegrasiMinat() {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         {/* Header with Sidebar Toggle */}
-        <header className="sticky top-0 z-50 bg-gradient-to-r from-aira-primary to-aira-secondary py-6 px-4 md:px-8 relative overflow-hidden shadow-lg">
+        <header className="sticky top-0 z-50 bg-gradient-to-r from-aira-primary to-aira-secondary h-[72px] px-4 md:px-8 relative overflow-visible shadow-lg">
           {/* Decorative gradient circles */}
           <div className="absolute right-0 top-1/3 w-[600px] h-[600px] rounded-full opacity-[0.08] bg-gradient-to-br from-white via-white/50 to-transparent pointer-events-none" />
           <div className="absolute -left-32 -top-32 w-[500px] h-[500px] opacity-[0.1] pointer-events-none">
             <div className="w-full h-full rounded-full bg-gradient-to-br from-white to-transparent" />
           </div>
           <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent pointer-events-none" />
-          <div className="relative max-w-7xl mx-auto flex items-center justify-between">
+          <div className="relative max-w-7xl mx-auto h-full flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+                className="text-white p-2 hover:bg-white/10 rounded-lg transition-colors relative z-10"
               >
                 {isSidebarOpen ? (
                   <X className="w-6 h-6" />
@@ -249,13 +255,20 @@ export default function IntegrasiMinat() {
                   <Menu className="w-6 h-6" />
                 )}
               </button>
-              <img
-                src="/assets/images/logo-aira-footer.png"
-                alt="AIRA Logo"
-                className="w-12 h-12 md:w-16 md:h-16 object-contain"
-              />
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
+                className="p-0 bg-transparent mt-1.5 -ml-[48px]"
+                aria-label="Ke Dashboard"
+              >
+                <img
+                  src="/assets/images/logo-aira-footer.png"
+                  alt="AIRA Logo"
+                  className="w-[140px] h-[140px] object-contain -my-[35px]"
+                />
+              </button>
             </div>
-            <h1 className="text-white text-2xl md:text-4xl lg:text-5xl font-bold">
+            <h1 className="absolute left-1/2 -translate-x-1/2 text-white text-xl md:text-2xl font-bold text-center">
               Integrasi Minat
             </h1>
             <div className="w-12 md:w-16"></div>
@@ -268,7 +281,7 @@ export default function IntegrasiMinat() {
           <aside
             className={`${
               isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-            } fixed left-0 top-[96px] md:top-[112px] bottom-0 z-40 w-64 bg-gradient-to-b from-aira-primary to-aira-secondary transition-transform duration-300 ease-in-out shadow-xl`}
+            } fixed left-0 top-[72px] md:top-[72px] bottom-0 z-40 w-64 bg-gradient-to-b from-aira-primary to-aira-secondary transition-transform duration-300 ease-in-out shadow-xl`}
           >
             <nav className="p-6 space-y-4 text-white h-full flex flex-col">
               <button
@@ -368,19 +381,19 @@ export default function IntegrasiMinat() {
 
         {/* End Session Confirmation Dialog */}
         <Dialog open={showEndSessionDialog} onOpenChange={setShowEndSessionDialog}>
-          <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
+          <DialogContent className="p-0 overflow-hidden max-w-sm">
             <div className="relative bg-white rounded-lg text-center">
               {/* Illustration */}
               <div className="flex justify-center items-center pt-8 pb-4">
                 <img
                   src="/assets/images/endSession-ilustration.png"
-                  alt="End Session Confirmation"
-                  className="w-full max-w-[300px] h-auto object-contain"
+                  alt="End Session"
+                  className="w-20 h-20 object-contain"
                 />
               </div>
               {/* Question Text */}
               <div className="px-6 pb-6">
-                <DialogTitle className="text-xl font-bold text-gray-800">
+                <DialogTitle className="text-xl font-bold text-aira-primary">
                   End Session?
                 </DialogTitle>
               </div>
@@ -411,18 +424,18 @@ export default function IntegrasiMinat() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header with Sidebar Toggle */}
-      <header className="sticky top-0 z-50 bg-gradient-to-r from-aira-primary to-aira-secondary py-6 px-4 md:px-8 relative overflow-hidden shadow-lg">
+      <header className="sticky top-0 z-50 bg-gradient-to-r from-aira-primary to-aira-secondary h-[72px] px-4 md:px-8 relative overflow-visible shadow-lg">
         {/* Decorative gradient circles */}
         <div className="absolute right-0 top-1/3 w-[600px] h-[600px] rounded-full opacity-[0.08] bg-gradient-to-br from-white via-white/50 to-transparent pointer-events-none" />
         <div className="absolute -left-32 -top-32 w-[500px] h-[500px] opacity-[0.1] pointer-events-none">
           <div className="w-full h-full rounded-full bg-gradient-to-br from-white to-transparent" />
         </div>
         <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent pointer-events-none" />
-        <div className="relative max-w-7xl mx-auto flex items-center justify-between">
+        <div className="relative max-w-7xl mx-auto h-full flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="text-white p-2 hover:bg-white/10 rounded-lg transition-colors relative z-10"
             >
               {isSidebarOpen ? (
                 <X className="w-6 h-6" />
@@ -430,13 +443,20 @@ export default function IntegrasiMinat() {
                 <Menu className="w-6 h-6" />
               )}
             </button>
-            <img
-              src="/assets/images/logo-aira-footer.png"
-              alt="AIRA Logo"
-              className="w-12 h-12 md:w-16 md:h-16 object-contain"
-            />
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              className="p-0 bg-transparent mt-1.5 -ml-[48px]"
+              aria-label="Ke Dashboard"
+            >
+              <img
+                src="/assets/images/logo-aira-footer.png"
+                alt="AIRA Logo"
+                className="w-[140px] h-[140px] object-contain -my-[35px]"
+              />
+            </button>
           </div>
-          <h1 className="text-white text-2xl md:text-4xl lg:text-5xl font-bold">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-white text-xl md:text-2xl font-bold text-center">
             Integrasi Minat
           </h1>
           <div className="w-12 md:w-16"></div>
@@ -449,7 +469,7 @@ export default function IntegrasiMinat() {
         <aside
           className={`${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } fixed left-0 top-[96px] md:top-[112px] bottom-0 z-40 w-64 bg-gradient-to-b from-aira-primary to-aira-secondary transition-transform duration-300 ease-in-out shadow-xl`}
+          } fixed left-0 top-[72px] md:top-[72px] bottom-0 z-40 w-64 bg-gradient-to-b from-aira-primary to-aira-secondary transition-transform duration-300 ease-in-out shadow-xl`}
         >
           <nav className="p-6 space-y-4 text-white h-full flex flex-col">
             <button
@@ -534,7 +554,7 @@ export default function IntegrasiMinat() {
                       Add Hard Skill
                     </button>
                   </DialogTrigger>
-                <DialogContent className="max-w-md">
+                  <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Pencarian Hardskill</DialogTitle>
                   </DialogHeader>
@@ -623,7 +643,7 @@ export default function IntegrasiMinat() {
                       Add Soft Skill
                     </button>
                   </DialogTrigger>
-                <DialogContent className="max-w-md">
+                  <DialogContent className="max-w-lg">
                   <DialogHeader>
                     <DialogTitle>Pencarian Softskill</DialogTitle>
                   </DialogHeader>

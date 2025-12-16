@@ -24,6 +24,22 @@ const getSkillsData = () => {
     }
 };
 
+// Helper to get All Course Names
+const getAllCoursesData = () => {
+    try {
+        const coursesPath = path.join(__dirname, '../../data_json/Nama_MK_All.json');
+        const coursesRaw = JSON.parse(fs.readFileSync(coursesPath, 'utf-8'));
+        
+        // Extract course names
+        const courses = coursesRaw.map(c => c["NAMA MK"]).filter(Boolean);
+        
+        return courses;
+    } catch (e) {
+        console.error("Error reading courses:", e);
+        return [];
+    }
+};
+
 // @desc    Get User Interests and Available Options
 // @route   GET /api/interests
 // @access  Private
@@ -81,6 +97,19 @@ const updateInterests = async (req, res) => {
 const getRecommendations = async (req, res) => {
     try {
         const student = await Student.findById(req.student._id);
+        
+        // Validate that interests are not empty
+        if (!student.interests || 
+            !student.interests.hard_skills || 
+            !student.interests.soft_skills ||
+            (student.interests.hard_skills.length === 0 && student.interests.soft_skills.length === 0)) {
+            return res.status(400).json({
+                success: false,
+                error: true,
+                message: "Silakan pilih minimal satu hard skill atau soft skill terlebih dahulu."
+            });
+        }
+        
         const grades = await Grade.find({ student: student._id });
 
         // Calculate current semester dynamically
@@ -96,6 +125,7 @@ const getRecommendations = async (req, res) => {
         }
 
         // Prepare data for AI Model
+        const courses = getAllCoursesData();
         const aiInput = {
             profile: {
                 jurusan: student.jurusan,
@@ -103,7 +133,8 @@ const getRecommendations = async (req, res) => {
                 ipk: student.ipk
             },
             academic_history: grades.map(g => ({ name: g.nama_mk, score: g.nilai })),
-            interests: student.interests
+            interests: student.interests,
+            available_courses: courses
         };
 
         // Check if API Key is set
@@ -118,29 +149,41 @@ const getRecommendations = async (req, res) => {
         }
 
         const prompt = `
-        Anda adalah konsultan akademik universitas. Berdasarkan data mahasiswa berikut, berikan rekomendasi mata kuliah atau topik studi lanjutan yang relevan.
-        
+        Anda adalah konsultan akademik universitas. Berdasarkan data mahasiswa berikut, berikan rekomendasi mata kuliah dari daftar mata kuliah yang tersedia.
+
         DATA MAHASISWA:
-        ${JSON.stringify(aiInput)}
+        ${JSON.stringify(aiInput, null, 2)}
+
+        STRUKTUR DATA:
+        - profile: Informasi profil mahasiswa (jurusan, semester, IPK)
+        - academic_history: Riwayat nilai mata kuliah (name=nama_mk, score=nilai)
+        - interests: Minat mahasiswa (hard_skills, soft_skills)
+        - available_courses: Daftar semua mata kuliah yang tersedia di universitas
 
         INTRUKSI OUTPUT:
-        1. Analisis minat (hard/soft skills) dan riwayat nilai.
-        2. Berikan 3-5 rekomendasi mata kuliah/topik.
-        3. Jelaskan alasan singkat untuk setiap rekomendasi.
-        4. OUTPUT HARUS BERUPA JSON VALID SAJA. Gunakan format berikut:
+        1. Analisis minat (hard_skills & soft_skills) dan riwayat nilai (academic_history) Anda.
+        2. Pertimbangkan profil Anda (jurusan, semester, IPK) untuk level kesulitan yang sesuai.
+        3. Pilih 3-5 mata kuliah dari "available_courses" yang paling relevan untuk Anda.
+        4. Pastikan rekomendasi HANYA dari daftar mata kuliah yang tersedia (available_courses).
+        5. JANGAN buat nama mata kuliah baru yang tidak ada di daftar available_courses.
+        6. Untuk setiap rekomendasi, berikan alasan DETAIL yang spesifik dalam bahasa Indonesia:
+           - SELALU sebutkan minimal 1 hard_skill atau soft_skill yang Anda pilih
+           - Jika memungkinkan, sebutkan 2 skills yang relevan
+           - Hubungkan langsung dengan riwayat nilai akademik (jika ada)
+           - Pertimbangkan semester dan IPK Anda untuk level kesulitan
+           - Jelaskan mengapa mata kuliah ini cocok untuk pengembangan karir Anda
+        7. OUTPUT HARUS BERUPA JSON VALID SAJA. Gunakan format berikut:
         {
             "recommendations": [
                 {
-                    "name": "Nama Topik/MK",
+                    "name": "Nama Mata Kuliah (harus dari available_courses)",
                     "type": "Hard Skill/Soft Skill/Course",
-                    "reason": "Alasan rekomendasi..."
-                }
-            ]
+                    "reason": "Alasan DETAIL: Mata kuliah ini sangat cocok untuk Anda yang memiliki minat Programming dan Data Analysis. Dengan nilai baik di Algoritma Pemrograman 1, mata kuliah ini akan memperkuat kemampuan coding dan analisis data Anda. Pada semester 4 dengan IPK 3.5, mata kuliah ini akan membantu pengembangan karir di bidang Software Development dan Data Science."
         }
         `;
 
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: "gemini-2.5-flash-lite",
             contents: prompt,
             config: {
                 responseMimeType: 'application/json'
